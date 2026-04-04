@@ -65,7 +65,7 @@ export default function Home() {
         <Divider />
 
         {/* Action Cards */}
-        <div className="relative z-5 flex gap-4 flex-wrap justify-center px-6 pt-12 animate-fade-up [animation-delay:350ms]">
+        <div className="relative z-5 flex flex-col sm:flex-row gap-4 justify-center px-6 pt-12 animate-fade-up [animation-delay:350ms]">
           <Link href="/browse" className="action-card action-card-lost group">
             <h2 className="font-display text-xl font-extrabold mb-2">I Lost Something</h2>
             <p className="text-sm opacity-75 leading-relaxed">

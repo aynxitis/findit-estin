@@ -36,6 +36,7 @@
 
 html {
   scroll-behavior: smooth;
+  font-size: 15px;
 }
 
 body {
@@ -386,7 +387,7 @@ body {
 
 /* ── Action Cards ── */
 .action-card {
-  @apply relative w-[260px] rounded-2xl p-8 pb-10 cursor-pointer transition-all;
+  @apply relative w-full sm:w-[260px] rounded-2xl p-8 pb-10 cursor-pointer transition-all;
   text-decoration: none;
 }
 
