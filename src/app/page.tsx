@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Nav, Footer, BackgroundBlobs } from "@/components/layout";
 import { StatsSection } from "@/components/home/stats-section";
 import { ScrollingStrip } from "@/components/home/scrolling-strip";
-import { ArrowUpRight, Mail } from "lucide-react";
+import { ArrowUpRight, Globe, Mail } from "lucide-react";
 
 export default function Home() {
   return (
@@ -114,9 +114,9 @@ export default function Home() {
             </div>
             <div className="flex gap-2 flex-wrap">
               <SocialLink href="https://github.com/aynxitis" icon={<GithubIcon />} label="GitHub" />
-              <SocialLink href="https://instagram.com/aynxitis" icon={<InstagramIcon />} label="Instagram" />
-              <SocialLink href="https://www.linkedin.com/in/anis-belamri/" icon={<LinkedinIcon />} label="LinkedIn" />
+<SocialLink href="https://www.linkedin.com/in/anis-belamri/" icon={<LinkedinIcon />} label="LinkedIn" />
               <SocialLink href="mailto:am_belamri@estin.dz" icon={<Mail className="w-3.5 h-3.5" />} label="Email" />
+              <SocialLink href="https://aynx.vercel.app" icon={<Globe className="w-3.5 h-3.5" />} label="Website" />
             </div>
           </div>
         </section>
@@ -175,13 +175,6 @@ function GithubIcon() {
   );
 }
 
-function InstagramIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
-      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z" />
-    </svg>
-  );
-}
 
 function LinkedinIcon() {
   return (

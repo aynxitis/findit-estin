@@ -91,7 +91,7 @@ export default function BrowsePage() {
         </div>
         
         {/* Type Toggle */}
-        <div className="type-toggle flex rounded-full p-1 bg-surface border border-border" role="tablist" aria-label="Item type filter">
+        <div className="type-toggle flex w-fit rounded-full p-1 bg-surface border border-border" role="tablist" aria-label="Item type filter">
           <button
             className={`toggle-btn ${activeType === "found" ? "active-found" : ""}`}
             onClick={() => handleTypeChange("found")}
@@ -150,7 +150,7 @@ export default function BrowsePage() {
       {activeType === "found" && (
         <div className="report-banner flex items-center justify-between gap-4 p-4 my-6 rounded-xl bg-red/10 border border-red/30">
           <p className="text-sm">
-            <strong>Don&apos;t see your item?</strong> Post a lost report and we&apos;ll notify you if something matching shows up.
+            <strong>Don&apos;t see your item?</strong>{" "}Post a lost report and we&apos;ll notify you if something matching shows up.
           </p>
           <Link
             href="/report/lost"
