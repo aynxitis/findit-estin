@@ -48,13 +48,30 @@ function getGateContent(pathname: string) {
  * with route-specific messaging matching the original FINDit design.
  */
 export function AuthGate({ children, fallback }: AuthGateProps) {
-  const { user, loading, signIn, signingIn, error } = useAuth();
+  const { user, userDoc, loading, signIn, signingIn, error } = useAuth();
   const pathname = usePathname();
   const { title, description } = getGateContent(pathname);
 
   // Show loading state
   if (loading) {
     return fallback ?? <AuthGateLoader />;
+  }
+
+  // User is authenticated but banned — block access
+  if (user && userDoc?.banned) {
+    return (
+      <div className="auth-gate animate-fade-up">
+        <div className="auth-gate-icon">
+          <Lock className="w-8 h-8 text-red" />
+        </div>
+        <h2 className="auth-gate-title font-display text-2xl font-extrabold tracking-tight text-red">
+          Account suspended
+        </h2>
+        <p className="auth-gate-desc">
+          Your account has been suspended. Contact the FINDit team if you think this is a mistake.
+        </p>
+      </div>
+    );
   }
 
   // User is authenticated — render the page

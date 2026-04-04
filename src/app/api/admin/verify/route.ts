@@ -32,8 +32,11 @@ export async function POST(request: NextRequest) {
   try {
     // Get client IP for rate limiting
     const headersList = await headers();
+    const realIp = headersList.get("x-real-ip");
     const forwardedFor = headersList.get("x-forwarded-for");
-    const ip = forwardedFor?.split(",")[0].trim() || "unknown";
+    // Prefer x-real-ip (not spoofable on Vercel); fall back to last entry in
+    // x-forwarded-for which Vercel appends and the client cannot control.
+    const ip = realIp || forwardedFor?.split(",").at(-1)?.trim() || "unknown";
     
     // Check rate limit
     if (!checkRateLimit(ip)) {

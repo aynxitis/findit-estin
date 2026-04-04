@@ -76,12 +76,16 @@ export function useNotifications(): UseNotificationsResult {
     const db = getClientDb();
     // Firestore batches max 500 operations
     const CHUNK_SIZE = 500;
-    for (let i = 0; i < unread.length; i += CHUNK_SIZE) {
-      const batch = writeBatch(db);
-      unread.slice(i, i + CHUNK_SIZE).forEach((n) => {
-        batch.update(doc(db, "notifications", n.id), { read: true });
-      });
-      await batch.commit();
+    try {
+      for (let i = 0; i < unread.length; i += CHUNK_SIZE) {
+        const batch = writeBatch(db);
+        unread.slice(i, i + CHUNK_SIZE).forEach((n) => {
+          batch.update(doc(db, "notifications", n.id), { read: true });
+        });
+        await batch.commit();
+      }
+    } catch {
+      // Notifications remain unread — not a blocking error
     }
   };
 

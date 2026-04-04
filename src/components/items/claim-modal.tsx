@@ -55,8 +55,14 @@ export function ClaimModal({ item, open, onOpenChange, onClaimSuccess }: ClaimMo
 
       await runTransaction(db, async (tx) => {
         const itemSnap = await tx.get(itemRef);
-        if (itemSnap.data()?.status === "claimed") {
+        const itemData = itemSnap.data();
+        if (itemData?.status === "claimed") {
           throw new Error("This item has already been claimed.");
+        }
+        // Reject claims on expired listings (30-day window)
+        const createdAt = itemData?.createdAt?.toDate?.();
+        if (createdAt && Date.now() - createdAt.getTime() > 30 * 24 * 60 * 60 * 1000) {
+          throw new Error("This listing has expired and can no longer be claimed.");
         }
 
         // Create claim record

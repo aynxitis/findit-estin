@@ -39,7 +39,7 @@ export function AdminDashboard() {
     async function verifyAdmin() {
       try {
         const auth = getAuth();
-        const token = await auth.currentUser?.getIdToken();
+        const token = await auth.currentUser?.getIdToken(true);
         if (!token) {
           setVerifying(false);
           return;
@@ -109,7 +109,7 @@ export function AdminDashboard() {
     try {
       const db = getClientDb();
       await deleteDoc(doc(db, "items", itemId));
-      setItems(items.filter((i) => i.id !== itemId));
+      setItems((prev) => prev.filter((i) => i.id !== itemId));
     } catch {
       // Delete failed - item remains in list
     } finally {
@@ -126,8 +126,8 @@ export function AdminDashboard() {
       await updateDoc(doc(db, "users", userId), {
         banned: !currentlyBanned,
       });
-      setUsers(
-        users.map((u) =>
+      setUsers((prev) =>
+        prev.map((u) =>
           u.uid === userId ? { ...u, banned: !currentlyBanned } : u
         )
       );

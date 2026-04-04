@@ -11,7 +11,10 @@ export function StatsSection() {
   const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
-    fetch("/api/stats")
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    fetch("/api/stats", { signal: controller.signal })
       .then((res) => res.json())
       .then((data) => {
         if (data.posted !== undefined) {
@@ -19,8 +22,14 @@ export function StatsSection() {
         }
       })
       .catch(() => {
-        // Keep stats as null on error
-      });
+        // Keep stats as null on error or timeout
+      })
+      .finally(() => clearTimeout(timeout));
+
+    return () => {
+      controller.abort();
+      clearTimeout(timeout);
+    };
   }, []);
 
   return (

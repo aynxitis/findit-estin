@@ -58,9 +58,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(firebaseUser);
 
       if (firebaseUser) {
-        // Fetch user document from Firestore
-        const doc = await getUserDocument(firebaseUser.uid);
-        setUserDoc(doc);
+        try {
+          const doc = await getUserDocument(firebaseUser.uid);
+          setUserDoc(doc);
+        } catch {
+          setUserDoc(null);
+          setError({ code: "firestore/read-failed", message: "Failed to load your account data. Please refresh." });
+        }
       } else {
         setUserDoc(null);
       }
@@ -90,8 +94,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setError(null);
     try {
       await authSignOut();
-      setUser(null);
-      setUserDoc(null);
+      // State cleanup is handled by the onAuthChange listener — no manual reset needed
     } catch (err) {
       const authError = err as AuthError;
       setError(authError);

@@ -46,6 +46,11 @@ export function useItems(options: UseItemsOptions = {}): UseItemsResult {
     // Track if this effect is still current (for cleanup)
     let isCurrent = true;
 
+    // Reset state for new query so stale items don't flash
+    setItems([]);
+    setLoading(true);
+    setError(null);
+
     try {
       const db = getClientDb();
       const itemsRef = collection(db, "items");
@@ -90,7 +95,7 @@ export function useItems(options: UseItemsOptions = {}): UseItemsResult {
             fetchedItems = fetchedItems.filter((item) => item.location === location);
           }
           if (searchQuery) {
-            const query = searchQuery.toLowerCase();
+            const normalizedQuery = searchQuery.toLowerCase();
             fetchedItems = fetchedItems.filter((item) => {
               const searchable = [
                 item.category,
@@ -99,7 +104,7 @@ export function useItems(options: UseItemsOptions = {}): UseItemsResult {
               ]
                 .join(" ")
                 .toLowerCase();
-              return searchable.includes(query);
+              return searchable.includes(normalizedQuery);
             });
           }
 

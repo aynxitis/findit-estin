@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { getClientDb, getClientStorage } from "@/lib/firebase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { checkPostRateLimit } from "@/lib/utils";
@@ -51,7 +51,7 @@ export function ReportForm({ type }: ReportFormProps) {
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const today = new Date().toISOString().split("T")[0];
+  const getToday = () => new Date().toISOString().split("T")[0];
 
   const [formData, setFormData] = useState<FormData>({
     category: null,
@@ -59,7 +59,7 @@ export function ReportForm({ type }: ReportFormProps) {
     spot: null,
     customSpot: "",
     whereLeft: null,
-    date: today,
+    date: getToday(),
     description: "",
     photoFile: null,
     photoPreview: null,
@@ -73,6 +73,7 @@ export function ReportForm({ type }: ReportFormProps) {
     submit: null,
   });
 
+  const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [submittedData, setSubmittedData] = useState<{
@@ -195,7 +196,7 @@ export function ReportForm({ type }: ReportFormProps) {
       newErrors.submit = "Description must be 400 characters or fewer.";
     }
 
-    if (formData.date && formData.date > today) {
+    if (formData.date && formData.date > getToday()) {
       newErrors.date = true;
     }
 
@@ -226,9 +227,36 @@ export function ReportForm({ type }: ReportFormProps) {
         return;
       }
 
-      let photoURL: string | null = null;
+      const locationValue = getLocationValue();
+      const data = {
+        type,
+        category: VALID_CATEGORIES.includes(formData.category!) ? formData.category : null,
+        zone: formData.zone?.slice(0, 40) || null,
+        location: locationValue?.slice(0, 80) || null,
+        whereLeft: type === "found" && formData.whereLeft && VALID_WHERE_LEFT.includes(formData.whereLeft)
+          ? formData.whereLeft
+          : null,
+        date: formData.date,
+        description: formData.description.trim().slice(0, 400) || null,
+        photoURL: null as string | null,
+        userEmail: user.email,
+        userName: user.displayName,
+        userUID: user.uid,
+        createdAt: serverTimestamp(),
+        status: "open",
+      };
+
+      // Secondary validation before any side effects (photo upload)
+      if (!data.category || !data.location || (type === "found" && !data.whereLeft)) {
+        setErrors((prev) => ({ ...prev, submit: "Invalid form data. Please refresh and try again." }));
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Upload photo only after all validation passes
       const storage = getClientStorage();
       const db = getClientDb();
+      let uploadedPhotoRef = null;
 
       if (formData.photoFile) {
         const mimeToExt: Record<string, string> = {
@@ -242,35 +270,19 @@ export function ReportForm({ type }: ReportFormProps) {
         const path = `${type}-items/${user.uid}/${Date.now()}.${ext}`;
         const photoRef = ref(storage, path);
         await uploadBytes(photoRef, formData.photoFile);
-        photoURL = await getDownloadURL(photoRef);
+        data.photoURL = await getDownloadURL(photoRef);
+        uploadedPhotoRef = photoRef;
       }
 
-      const locationValue = getLocationValue();
-      const data = {
-        type,
-        category: VALID_CATEGORIES.includes(formData.category!) ? formData.category : null,
-        zone: formData.zone?.slice(0, 40) || null,
-        location: locationValue?.slice(0, 80) || null,
-        whereLeft: type === "found" && formData.whereLeft && VALID_WHERE_LEFT.includes(formData.whereLeft)
-          ? formData.whereLeft
-          : null,
-        date: formData.date,
-        description: formData.description.trim().slice(0, 400) || null,
-        photoURL,
-        userEmail: user.email,
-        userName: user.displayName,
-        userUID: user.uid,
-        createdAt: serverTimestamp(),
-        status: "open",
-      };
-
-      if (!data.category || !data.location || (type === "found" && !data.whereLeft)) {
-        setErrors((prev) => ({ ...prev, submit: "Invalid form data. Please refresh and try again." }));
-        setIsSubmitting(false);
-        return;
+      try {
+        await addDoc(collection(db, "items"), data);
+      } catch (writeErr) {
+        // Clean up orphaned photo if the Firestore write fails
+        if (uploadedPhotoRef) {
+          await deleteObject(uploadedPhotoRef).catch(() => {});
+        }
+        throw writeErr;
       }
-
-      await addDoc(collection(db, "items"), data);
 
       setSubmittedData({
         category: CATEGORY_LABELS[data.category] || data.category,
@@ -464,7 +476,7 @@ export function ReportForm({ type }: ReportFormProps) {
         <input
           type="date"
           className={`date-input ${isTeal ? "date-input--teal" : "date-input--red"}`}
-          max={today}
+          max={getToday()}
           value={formData.date}
           onChange={(e) => {
             setFormData((prev) => ({ ...prev, date: e.target.value }));
@@ -502,16 +514,16 @@ export function ReportForm({ type }: ReportFormProps) {
         <div className="photo-upload">
           {!formData.photoPreview ? (
             <div
-              className={`photo-drop ${isTeal ? "photo-drop--teal" : "photo-drop--red"}`}
+              className={`photo-drop ${isTeal ? "photo-drop--teal" : "photo-drop--red"} ${isDragging ? "dragover" : ""}`}
               onClick={() => fileInputRef.current?.click()}
               onDragOver={(e) => {
                 e.preventDefault();
-                e.currentTarget.classList.add("dragover");
+                setIsDragging(true);
               }}
-              onDragLeave={(e) => e.currentTarget.classList.remove("dragover")}
+              onDragLeave={() => setIsDragging(false)}
               onDrop={(e) => {
                 e.preventDefault();
-                e.currentTarget.classList.remove("dragover");
+                setIsDragging(false);
                 handlePhotoSelect(e.dataTransfer.files[0] || null);
               }}
             >

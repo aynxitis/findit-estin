@@ -16,10 +16,9 @@ interface ItemCardProps {
 }
 
 function isExpired(item: Item): boolean {
-  const ts = item.createdAt?.toDate?.() || (item.date ? new Date(item.date + "T00:00:00") : null);
-  if (!ts) return false;
-  const ageMs = Date.now() - ts.getTime();
-  return ageMs > EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+  const ts = item.createdAt?.toDate?.();
+  if (!ts) return false; // pending server timestamp — not expired yet
+  return Date.now() - ts.getTime() > EXPIRY_DAYS * 24 * 60 * 60 * 1000;
 }
 
 function ItemCardComponent({ item, currentUserId, onClaim, index = 0 }: ItemCardProps) {
@@ -131,11 +130,17 @@ function ItemCardComponent({ item, currentUserId, onClaim, index = 0 }: ItemCard
   );
 }
 
-// Memoize to prevent unnecessary re-renders when parent list updates
+// Memoize to prevent unnecessary re-renders when parent list updates.
+// All visible fields are included so content changes are never silently dropped.
 export const ItemCard = memo(ItemCardComponent, (prevProps, nextProps) => {
   return (
     prevProps.item.id === nextProps.item.id &&
     prevProps.item.status === nextProps.item.status &&
+    prevProps.item.description === nextProps.item.description &&
+    prevProps.item.photoURL === nextProps.item.photoURL &&
+    prevProps.item.category === nextProps.item.category &&
+    prevProps.item.location === nextProps.item.location &&
+    prevProps.item.date === nextProps.item.date &&
     prevProps.currentUserId === nextProps.currentUserId &&
     prevProps.index === nextProps.index
   );
