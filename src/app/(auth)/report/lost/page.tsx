@@ -10,11 +10,11 @@ export default function ReportLostPage() {
       <div className="mb-8 animate-fade-up">
         <Link
           href="/browse"
-          className="text-sm text-[var(--muted)] hover:text-yellow mb-4 inline-flex items-center gap-1 transition-colors"
+          className="text-sm text-[var(--muted)] hover:text-yellow mb-4 inline-flex items-center gap-1 transition-colors font-display"
         >
           ← Back to browse
         </Link>
-        <h1 className="font-display text-3xl md:text-4xl font-bold mt-4">
+        <h1 className="font-display text-3xl md:text-4xl font-extrabold mt-4">
           Report a <span className="text-red">Lost</span> Item
         </h1>
         <p className="text-[var(--muted)] mt-3">

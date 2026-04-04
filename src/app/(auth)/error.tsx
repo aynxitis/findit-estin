@@ -26,13 +26,13 @@ export default function AuthError({
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={reset}
-            className="px-6 py-3 rounded-xl bg-yellow text-black font-semibold hover:-translate-y-0.5 hover:brightness-110 transition-all cursor-pointer"
+            className="px-6 py-3 rounded-xl bg-yellow text-black font-display font-semibold hover:-translate-y-0.5 hover:brightness-110 transition-all cursor-pointer"
           >
             Try again
           </button>
           <Link
             href="/browse"
-            className="px-6 py-3 rounded-xl bg-[var(--surface)] border border-[var(--border)] font-semibold hover:-translate-y-0.5 hover:bg-yellow/20 hover:border-yellow transition-all"
+            className="px-6 py-3 rounded-xl bg-[var(--surface)] border border-[var(--border)] font-display font-semibold hover:-translate-y-0.5 hover:bg-yellow/20 hover:border-yellow transition-all"
           >
             Back to browse
           </Link>

@@ -51,20 +51,20 @@ export function AccountModal({ open, onClose }: AccountModalProps) {
           <Link
             href="/profile"
             onClick={onClose}
-            className="block w-full py-3 px-4 rounded-xl border border-[var(--border)] text-center hover:border-yellow hover:bg-yellow/10 hover:text-yellow hover:-translate-y-0.5 transition-all cursor-pointer"
+            className="block w-full py-3 px-4 rounded-xl border border-[var(--border)] text-center font-display hover:border-yellow hover:bg-yellow/10 hover:text-yellow hover:-translate-y-0.5 transition-all cursor-pointer"
           >
             My profile & posts
           </Link>
           <Link
             href="/browse"
             onClick={onClose}
-            className="block w-full py-3 px-4 rounded-xl border border-[var(--border)] text-center hover:border-yellow hover:bg-yellow/10 hover:text-yellow hover:-translate-y-0.5 transition-all cursor-pointer"
+            className="block w-full py-3 px-4 rounded-xl border border-[var(--border)] text-center font-display hover:border-yellow hover:bg-yellow/10 hover:text-yellow hover:-translate-y-0.5 transition-all cursor-pointer"
           >
             Browse lost & found items
           </Link>
           <a
             href="mailto:am_belamri@estin.dz"
-            className="block w-full py-3 px-4 rounded-xl border border-[var(--border)] text-center hover:border-yellow hover:bg-yellow/10 hover:text-yellow hover:-translate-y-0.5 transition-all cursor-pointer"
+            className="block w-full py-3 px-4 rounded-xl border border-[var(--border)] text-center font-display hover:border-yellow hover:bg-yellow/10 hover:text-yellow hover:-translate-y-0.5 transition-all cursor-pointer"
           >
             Report a bug
           </a>
@@ -76,7 +76,7 @@ export function AccountModal({ open, onClose }: AccountModalProps) {
         {/* Sign out */}
         <button
           onClick={handleSignOut}
-          className="w-full py-3 rounded-xl bg-red text-white font-semibold hover:bg-red/90 cursor-pointer"
+          className="w-full py-3 rounded-xl bg-red text-white font-display font-semibold hover:bg-red/90 cursor-pointer"
         >
           Sign out
         </button>

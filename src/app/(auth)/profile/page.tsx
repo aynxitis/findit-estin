@@ -138,7 +138,7 @@ export default function ProfilePage() {
           </p>
           <Link
             href={type === "found" ? "/report/found" : "/report/lost"}
-            className={`mt-2 inline-block px-6 py-3 rounded-xl font-semibold cursor-pointer ${
+            className={`mt-2 inline-block px-6 py-3 rounded-xl font-display font-semibold cursor-pointer ${
               type === "found" ? "bg-teal text-black" : "bg-red text-white"
             }`}
           >
