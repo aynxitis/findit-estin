@@ -1,0 +1,15 @@
+<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+	<defs>
+		<linearGradient id="g1" x2="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(400,400,-400,400,0,0)">
+			<stop offset="0" stop-color="#1a0008"/>
+			<stop offset=".5" stop-color="#0a0a1a"/>
+			<stop offset="1" stop-color="#001a14"/>
+		</linearGradient>
+		<image aria-label="F"  width="303" height="192" id="img1" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAS8AAADABAMAAACnlfgIAAAAAXNSR0IB2cksfwAAACpQTFRFAAAA////////////////////////////////////////////////////hrvKLwAAAA50Uk5TAEAX/wUWy4CXzBXlwJlFtkNgAAABIElEQVR4nO3ZwUkDQRSA4SxR8BKwBxuwhdTg2R5sI7dYQ5pJGXZgCx4jywr7g4FZ+P7jYwY+5jhvmp53I/Y9vYwJO4DFwGpgNbAaWA2sBlYDq4HVwGpgNbAaWA2sBlYDq4HVwGpgNbAaWA2sBlYDq4HVwGpgtYFhb18rju2P94bMO617scfr3SXzwGpgNbAaWA2sBlYDq4HVwGpgNbAaWG2AL4L3j6Up2N+B1cBqYDWwGlgNrAZWA6uB1cBqYDWwGlgNrAZWA6uB1cBqYDWwGlgNrAZW2xrscl5x9+nznzG/e3hdmm58Jw52C6wGVgOrgdXAamA1sBpYDawGVgOrgdXAamA1sBpYDawGVgOrgdXAamA1sBpYDawGVgOrDQv7AdgOmMFMJG1NAAAAAElFTkSuQmCC"/>
+	</defs>
+	<style>
+		.s0 { fill: url(#g1) } 
+	</style>
+	<path fill-rule="evenodd" class="s0" d="m88 0h224c48.6 0 88 39.4 88 88v224c0 48.6-39.4 88-88 88h-224c-48.6 0-88-39.4-88-88v-224c0-48.6 39.4-88 88-88z"/>
+	<use id="F" href="#img1" x="49" y="104"/>
+</svg>
