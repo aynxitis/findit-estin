@@ -26,6 +26,7 @@ export interface User {
   photo?: string;
   verified: boolean;
   joinedAt: Timestamp;
+  banned?: boolean;
 }
 
 export interface Notification {
