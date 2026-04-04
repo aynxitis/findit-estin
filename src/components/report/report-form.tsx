@@ -294,7 +294,7 @@ export function ReportForm({ type }: ReportFormProps) {
           year: "numeric",
         }),
         description: data.description || "",
-        hasPhoto: !!photoURL,
+        hasPhoto: !!data.photoURL,
       });
       setShowSuccess(true);
     } catch {
