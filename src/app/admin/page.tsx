@@ -2,7 +2,7 @@ import { AdminDashboard } from "@/components/admin/admin-dashboard";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Admin · FINDit",
+  title: "Admin · Dashboard",
   robots: "noindex, nofollow",
 };
 

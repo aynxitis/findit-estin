@@ -96,7 +96,12 @@ function ItemCardComponent({ item, currentUserId, onClaim, index = 0 }: ItemCard
         <div className="item-category">
           {categoryIcon} {categoryLabel}
         </div>
-        <div className="item-location">📍 {locationLabel}</div>
+        <div className="flex items-center justify-between gap-2">
+          <div className="item-poster">
+            👤 {isOwnPost ? "You" : (item.userName || "ESTIN Student")}
+          </div>
+          <div className="item-location">📍 {locationLabel}</div>
+        </div>
         {item.description && (
           <div className="item-desc">{item.description}</div>
         )}
@@ -141,7 +146,9 @@ export const ItemCard = memo(ItemCardComponent, (prevProps, nextProps) => {
     prevProps.item.category === nextProps.item.category &&
     prevProps.item.location === nextProps.item.location &&
     prevProps.item.date === nextProps.item.date &&
+    prevProps.item.userName === nextProps.item.userName &&
     prevProps.currentUserId === nextProps.currentUserId &&
+    prevProps.onClaim === nextProps.onClaim &&
     prevProps.index === nextProps.index
   );
 });

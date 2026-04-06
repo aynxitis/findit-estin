@@ -72,6 +72,9 @@ export const WHERE_LEFT_OPTIONS = [
 ] as const;
 
 // Validation arrays
+export const VALID_TYPES = ["found", "lost"];
+export const VALID_STATUSES = ["open", "claimed"];
 export const VALID_CATEGORIES = ["keys", "card", "phone", "bag", "clothing", "electronics", "other"];
 export const VALID_LOCATIONS = ["library", "foyer", "td_halls", "tp_halls", "restau", "res_foyer", "unknown"];
+export const VALID_ZONES = ["school", "residence", "unknown"];
 export const VALID_WHERE_LEFT = ["with_me", "admin", "left_there"];

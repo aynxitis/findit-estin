@@ -690,6 +690,11 @@ body {
   line-clamp: 2;
 }
 
+.item-poster {
+  @apply text-xs mt-1;
+  color: rgba(255, 255, 255, 0.35);
+}
+
 .item-footer {
   @apply px-4 pb-4;
 }

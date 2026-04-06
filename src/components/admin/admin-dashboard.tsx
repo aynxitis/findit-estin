@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { collection, query, orderBy, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, limit } from "firebase/firestore";
 import { getClientDb } from "@/lib/firebase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { CATEGORY_LABELS, CATEGORY_ICONS, LOCATION_LABELS } from "@/lib/constants/labels";
 import type { Item, User as UserType } from "@/lib/types/item";
 import { formatDate } from "@/lib/utils";
-import { Trash2, Ban, CheckCircle, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { getAuth } from "firebase/auth";
 
 interface Stats {
@@ -25,11 +25,10 @@ export function AdminDashboard() {
   const [users, setUsers] = useState<UserType[]>([]);
   const [activeTab, setActiveTab] = useState<"items" | "users">("items");
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [serverVerified, setServerVerified] = useState(false);
   const [verifying, setVerifying] = useState(true);
 
-  // Server-side admin verification (eliminates client-side admin email exposure)
+  // Server-side admin verification
   useEffect(() => {
     if (!user || authLoading) {
       setVerifying(false);
@@ -40,17 +39,13 @@ export function AdminDashboard() {
       try {
         const auth = getAuth();
         const token = await auth.currentUser?.getIdToken(true);
-        if (!token) {
-          setVerifying(false);
-          return;
-        }
+        if (!token) { setVerifying(false); return; }
 
         const res = await fetch("/api/admin/verify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token }),
         });
-
         const data = await res.json();
         setServerVerified(data.isAdmin === true);
       } catch {
@@ -63,31 +58,22 @@ export function AdminDashboard() {
     verifyAdmin();
   }, [user, authLoading]);
 
-  // Load data only after server verification
   useEffect(() => {
-    if (serverVerified) {
-      loadData();
-    }
+    if (serverVerified) loadData();
   }, [serverVerified]);
 
   const loadData = async () => {
     setLoading(true);
     try {
       const db = getClientDb();
-      
-      // Load items
-      const itemsSnap = await getDocs(
-        query(collection(db, "items"), orderBy("createdAt", "desc"))
-      );
+      const [itemsSnap, usersSnap] = await Promise.all([
+        getDocs(query(collection(db, "items"), orderBy("createdAt", "desc"), limit(200))),
+        getDocs(query(collection(db, "users"), limit(200))),
+      ]);
       const itemsData = itemsSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as Item[];
-      setItems(itemsData);
-
-      // Load users
-      const usersSnap = await getDocs(collection(db, "users"));
       const usersData = usersSnap.docs.map((d) => ({ uid: d.id, ...d.data() })) as UserType[];
+      setItems(itemsData);
       setUsers(usersData);
-
-      // Calculate stats
       setStats({
         totalItems: itemsData.length,
         foundItems: itemsData.filter((i) => i.type === "found").length,
@@ -96,49 +82,13 @@ export function AdminDashboard() {
         totalUsers: usersData.length,
       });
     } catch {
-      // Admin data load failed - stats/lists remain empty
+      // load failed
     } finally {
       setLoading(false);
     }
   };
 
-  // Delete item
-  const handleDeleteItem = async (itemId: string) => {
-    if (!confirm("Delete this item?")) return;
-    setActionLoading(itemId);
-    try {
-      const db = getClientDb();
-      await deleteDoc(doc(db, "items", itemId));
-      setItems((prev) => prev.filter((i) => i.id !== itemId));
-    } catch {
-      // Delete failed - item remains in list
-    } finally {
-      setActionLoading(null);
-    }
-  };
 
-  // Ban/unban user
-  const handleToggleBan = async (userId: string, currentlyBanned: boolean) => {
-    if (!confirm(currentlyBanned ? "Unban this user?" : "Ban this user?")) return;
-    setActionLoading(userId);
-    try {
-      const db = getClientDb();
-      await updateDoc(doc(db, "users", userId), {
-        banned: !currentlyBanned,
-      });
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.uid === userId ? { ...u, banned: !currentlyBanned } : u
-        )
-      );
-    } catch {
-      // Ban toggle failed - user state unchanged in UI
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  // Auth loading or verifying
   if (authLoading || verifying) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
@@ -147,7 +97,6 @@ export function AdminDashboard() {
     );
   }
 
-  // Not admin (server verification failed)
   if (!serverVerified) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
@@ -162,11 +111,11 @@ export function AdminDashboard() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="font-display text-3xl font-bold">Admin Dashboard</h1>
+        <h1 className="font-display text-3xl font-extrabold">Dashboard</h1>
         <button
           onClick={loadData}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] hover:bg-[var(--border)] hover:-translate-y-0.5 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed transition-all"
+          className="font-display flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] hover:bg-[var(--border)] hover:-translate-y-0.5 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed transition-all text-sm font-semibold"
         >
           <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
           Refresh
@@ -177,23 +126,23 @@ export function AdminDashboard() {
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           <div className="p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)]">
-            <div className="text-2xl font-bold">{stats.totalItems}</div>
+            <div className="font-display text-2xl font-bold">{stats.totalItems}</div>
             <div className="text-sm text-[var(--muted)]">Total Items</div>
           </div>
           <div className="p-4 rounded-xl bg-teal/10 border border-teal/20">
-            <div className="text-2xl font-bold text-teal">{stats.foundItems}</div>
+            <div className="font-display text-2xl font-bold text-teal">{stats.foundItems}</div>
             <div className="text-sm text-[var(--muted)]">Found</div>
           </div>
           <div className="p-4 rounded-xl bg-red/10 border border-red/20">
-            <div className="text-2xl font-bold text-red">{stats.lostItems}</div>
+            <div className="font-display text-2xl font-bold text-red">{stats.lostItems}</div>
             <div className="text-sm text-[var(--muted)]">Lost</div>
           </div>
           <div className="p-4 rounded-xl bg-yellow/10 border border-yellow/20">
-            <div className="text-2xl font-bold text-yellow">{stats.claimedItems}</div>
+            <div className="font-display text-2xl font-bold text-yellow">{stats.claimedItems}</div>
             <div className="text-sm text-[var(--muted)]">Resolved</div>
           </div>
           <div className="p-4 rounded-xl bg-blue/10 border border-blue/20">
-            <div className="text-2xl font-bold text-blue">{stats.totalUsers}</div>
+            <div className="font-display text-2xl font-bold text-blue">{stats.totalUsers}</div>
             <div className="text-sm text-[var(--muted)]">Users</div>
           </div>
         </div>
@@ -203,7 +152,7 @@ export function AdminDashboard() {
       <div className="flex gap-2 mb-6">
         <button
           onClick={() => setActiveTab("items")}
-          className={`px-4 py-2 rounded-xl font-semibold cursor-pointer transition-all ${
+          className={`font-display px-4 py-2 rounded-xl font-semibold cursor-pointer transition-all text-sm ${
             activeTab === "items"
               ? "bg-[var(--foreground)] text-[var(--background)]"
               : "bg-[var(--surface)] border border-[var(--border)] hover:-translate-y-0.5"
@@ -213,7 +162,7 @@ export function AdminDashboard() {
         </button>
         <button
           onClick={() => setActiveTab("users")}
-          className={`px-4 py-2 rounded-xl font-semibold cursor-pointer transition-all ${
+          className={`font-display px-4 py-2 rounded-xl font-semibold cursor-pointer transition-all text-sm ${
             activeTab === "users"
               ? "bg-[var(--foreground)] text-[var(--background)]"
               : "bg-[var(--surface)] border border-[var(--border)] hover:-translate-y-0.5"
@@ -229,24 +178,19 @@ export function AdminDashboard() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-[var(--border)]">
-                <th className="text-left py-3 px-2 text-sm font-semibold">Type</th>
-                <th className="text-left py-3 px-2 text-sm font-semibold">Category</th>
-                <th className="text-left py-3 px-2 text-sm font-semibold">Location</th>
-                <th className="text-left py-3 px-2 text-sm font-semibold">Status</th>
-                <th className="text-left py-3 px-2 text-sm font-semibold">User</th>
-                <th className="text-left py-3 px-2 text-sm font-semibold">Date</th>
-                <th className="text-right py-3 px-2 text-sm font-semibold">Actions</th>
+                <th className="font-display text-left py-3 px-2 text-xs font-bold uppercase tracking-wide">Type</th>
+                <th className="font-display text-left py-3 px-2 text-xs font-bold uppercase tracking-wide">Category</th>
+                <th className="font-display text-left py-3 px-2 text-xs font-bold uppercase tracking-wide">Location</th>
+                <th className="font-display text-left py-3 px-2 text-xs font-bold uppercase tracking-wide">Status</th>
+                <th className="font-display text-left py-3 px-2 text-xs font-bold uppercase tracking-wide">User</th>
+                <th className="font-display text-left py-3 px-2 text-xs font-bold uppercase tracking-wide">Date</th>
               </tr>
             </thead>
             <tbody>
               {items.map((item) => (
                 <tr key={item.id} className="border-b border-[var(--border)] hover:bg-[var(--surface)]">
                   <td className="py-3 px-2">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                        item.type === "found" ? "bg-teal/20 text-teal" : "bg-red/20 text-red"
-                      }`}
-                    >
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${item.type === "found" ? "bg-teal/20 text-teal" : "bg-red/20 text-red"}`}>
                       {item.type}
                     </span>
                   </td>
@@ -257,28 +201,13 @@ export function AdminDashboard() {
                     {LOCATION_LABELS[item.location]}
                   </td>
                   <td className="py-3 px-2">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${
-                        item.status === "claimed"
-                          ? "bg-yellow/20 text-yellow"
-                          : "bg-[var(--surface)]"
-                      }`}
-                    >
+                    <span className={`px-2 py-1 rounded-full text-xs ${item.status === "claimed" ? "bg-yellow/20 text-yellow" : "bg-[var(--surface)]"}`}>
                       {item.status}
                     </span>
                   </td>
                   <td className="py-3 px-2 text-sm text-[var(--muted)]">{item.userEmail}</td>
                   <td className="py-3 px-2 text-sm text-[var(--muted)]">
                     {item.createdAt?.toDate ? formatDate(item.createdAt.toDate()) : "—"}
-                  </td>
-                  <td className="py-3 px-2 text-right">
-                    <button
-                      onClick={() => handleDeleteItem(item.id)}
-                      disabled={actionLoading === item.id}
-                      className="p-2 text-red hover:bg-red/10 rounded-lg disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
-                    >
-                      <Trash2 size={16} />
-                    </button>
                   </td>
                 </tr>
               ))}
@@ -293,11 +222,10 @@ export function AdminDashboard() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-[var(--border)]">
-                <th className="text-left py-3 px-2 text-sm font-semibold">Name</th>
-                <th className="text-left py-3 px-2 text-sm font-semibold">Email</th>
-                <th className="text-left py-3 px-2 text-sm font-semibold">Status</th>
-                <th className="text-left py-3 px-2 text-sm font-semibold">Joined</th>
-                <th className="text-right py-3 px-2 text-sm font-semibold">Actions</th>
+                <th className="font-display text-left py-3 px-2 text-xs font-bold uppercase tracking-wide">Name</th>
+                <th className="font-display text-left py-3 px-2 text-xs font-bold uppercase tracking-wide">Email</th>
+                <th className="font-display text-left py-3 px-2 text-xs font-bold uppercase tracking-wide">Status</th>
+                <th className="font-display text-left py-3 px-2 text-xs font-bold uppercase tracking-wide">Joined</th>
               </tr>
             </thead>
             <tbody>
@@ -307,30 +235,13 @@ export function AdminDashboard() {
                   <td className="py-3 px-2 text-sm text-[var(--muted)]">{u.email}</td>
                   <td className="py-3 px-2">
                     {u.banned ? (
-                      <span className="px-2 py-1 rounded-full text-xs bg-red/20 text-red">
-                        Banned
-                      </span>
+                      <span className="px-2 py-1 rounded-full text-xs bg-red/20 text-red">Banned</span>
                     ) : (
-                      <span className="px-2 py-1 rounded-full text-xs bg-teal/20 text-teal">
-                        Active
-                      </span>
+                      <span className="px-2 py-1 rounded-full text-xs bg-teal/20 text-teal">Active</span>
                     )}
                   </td>
                   <td className="py-3 px-2 text-sm text-[var(--muted)]">
                     {u.joinedAt?.toDate ? formatDate(u.joinedAt.toDate()) : "—"}
-                  </td>
-                  <td className="py-3 px-2 text-right">
-                    <button
-                      onClick={() => handleToggleBan(u.uid, !!u.banned)}
-                      disabled={actionLoading === u.uid}
-                      className={`p-2 rounded-lg disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed ${
-                        u.banned
-                          ? "text-teal hover:bg-teal/10"
-                          : "text-red hover:bg-red/10"
-                      }`}
-                    >
-                      {u.banned ? <CheckCircle size={16} /> : <Ban size={16} />}
-                    </button>
                   </td>
                 </tr>
               ))}
