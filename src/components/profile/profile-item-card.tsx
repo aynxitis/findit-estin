@@ -94,7 +94,7 @@ export function ProfileItemCard({
             <button
               onClick={onResolve}
               disabled={resolving}
-              className="flex-1 py-2 rounded-xl bg-teal text-black text-sm font-semibold hover:bg-teal/80 hover:-translate-y-0.5 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed transition-all"
+              className="flex-1 py-2 rounded-xl bg-teal text-black text-sm font-semibold font-display hover:bg-teal/80 hover:-translate-y-0.5 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed transition-all"
             >
               {resolving ? "..." : "Mark resolved ✓"}
             </button>
@@ -102,7 +102,7 @@ export function ProfileItemCard({
           <button
             onClick={onDelete}
             className={cn(
-              "py-2 px-4 rounded-xl border border-[var(--border)] text-sm font-semibold hover:bg-red hover:text-white hover:border-red hover:-translate-y-0.5 cursor-pointer transition-all",
+              "py-2 px-4 rounded-xl border border-[var(--border)] text-sm font-semibold font-display hover:bg-red hover:text-white hover:border-red hover:-translate-y-0.5 cursor-pointer transition-all",
               isClaimed && "flex-1"
             )}
           >

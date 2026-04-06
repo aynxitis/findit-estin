@@ -45,14 +45,14 @@ export function ConfirmModal({
           <button
             onClick={onClose}
             disabled={loading}
-            className="flex-1 py-3 rounded-xl border border-[var(--border)] font-semibold hover:bg-[var(--surface)] hover:-translate-y-0.5 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed transition-all"
+            className="flex-1 py-3 rounded-xl border border-[var(--border)] font-semibold font-display hover:bg-yellow/10 hover:text-yellow hover:border-yellow hover:-translate-y-0.5 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed transition-all"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             disabled={loading}
-            className={`flex-1 py-3 rounded-xl font-semibold hover:-translate-y-0.5 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed transition-all ${
+            className={`flex-1 py-3 rounded-xl font-semibold font-display hover:-translate-y-0.5 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed transition-all ${
               confirmVariant === "danger"
                 ? "bg-red text-white"
                 : "bg-[var(--foreground)] text-[var(--background)]"

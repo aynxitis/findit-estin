@@ -275,7 +275,8 @@ export function ReportForm({ type }: ReportFormProps) {
       }
 
       try {
-        await addDoc(collection(db, "items"), data);
+        const cleanData = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== null));
+        await addDoc(collection(db, "items"), cleanData);
       } catch (writeErr) {
         // Clean up orphaned photo if the Firestore write fails
         if (uploadedPhotoRef) {
@@ -297,7 +298,8 @@ export function ReportForm({ type }: ReportFormProps) {
         hasPhoto: !!data.photoURL,
       });
       setShowSuccess(true);
-    } catch {
+    } catch (err) {
+      console.error("Report submission error:", err);
       setErrors((prev) => ({ ...prev, submit: "Something went wrong. Please try again." }));
     } finally {
       setIsSubmitting(false);
