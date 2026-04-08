@@ -22,7 +22,10 @@ import {
   VALID_WHERE_LEFT,
 } from "@/lib/constants/labels";
 
-const SUBMIT_TIMEOUT_MS = 15000;
+const RATE_LIMIT_TIMEOUT_MS = 15000;
+const PHOTO_UPLOAD_TIMEOUT_MS = 90000;
+const PHOTO_URL_TIMEOUT_MS = 30000;
+const SAVE_ITEM_TIMEOUT_MS = 20000;
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return Promise.race([
@@ -236,7 +239,11 @@ export function ReportForm({ type }: ReportFormProps) {
 
     try {
       // Check rate limit (3 posts per hour, 10 per day)
-      const rateLimit = await withTimeout(checkPostRateLimit(user.uid), SUBMIT_TIMEOUT_MS, "Rate limit check");
+      const rateLimit = await withTimeout(
+        checkPostRateLimit(user.uid),
+        RATE_LIMIT_TIMEOUT_MS,
+        "Rate limit check"
+      );
       if (!rateLimit.allowed) {
         const limitType = rateLimit.dailyRemaining === 0 ? "daily" : "hourly";
         const limit = limitType === "daily" ? 10 : 3;
@@ -288,14 +295,26 @@ export function ReportForm({ type }: ReportFormProps) {
         const ext = mimeToExt[formData.photoFile.type] || formData.photoFile.name.split(".").pop() || "jpg";
         const path = `${type}-items/${user.uid}/${Date.now()}.${ext}`;
         const photoRef = ref(storage, path);
-        await withTimeout(uploadBytes(photoRef, formData.photoFile), SUBMIT_TIMEOUT_MS, "Photo upload");
-        data.photoURL = await withTimeout(getDownloadURL(photoRef), SUBMIT_TIMEOUT_MS, "Photo URL");
+        await withTimeout(
+          uploadBytes(photoRef, formData.photoFile),
+          PHOTO_UPLOAD_TIMEOUT_MS,
+          "Photo upload"
+        );
+        data.photoURL = await withTimeout(
+          getDownloadURL(photoRef),
+          PHOTO_URL_TIMEOUT_MS,
+          "Photo URL"
+        );
         uploadedPhotoRef = photoRef;
       }
 
       try {
         const cleanData = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== null));
-        await withTimeout(addDoc(collection(db, "items"), cleanData), SUBMIT_TIMEOUT_MS, "Saving item");
+        await withTimeout(
+          addDoc(collection(db, "items"), cleanData),
+          SAVE_ITEM_TIMEOUT_MS,
+          "Saving item"
+        );
       } catch (writeErr) {
         // Clean up orphaned photo if the Firestore write fails
         if (uploadedPhotoRef) {
@@ -319,9 +338,18 @@ export function ReportForm({ type }: ReportFormProps) {
       setShowSuccess(true);
     } catch (err) {
       console.error("Report submission error:", err);
-      const message = err instanceof Error && err.message.includes("timed out")
-        ? "The server took too long to respond. Please check your connection and try again."
-        : "Something went wrong. Please try again.";
+      const message =
+        err instanceof Error && err.message.includes("Photo upload timed out")
+          ? "Photo upload is taking too long. Try a smaller image or a better connection."
+          : err instanceof Error && err.message.includes("Photo URL timed out")
+          ? "Uploaded photo is processing slowly. Please try again in a moment."
+          : err instanceof Error && err.message.includes("Saving item timed out")
+          ? "Saving your report is taking too long. Please try again."
+          : err instanceof Error && err.message.includes("Rate limit check timed out")
+          ? "Could not verify posting limits right now. Please try again."
+          : err instanceof Error && err.message.includes("timed out")
+          ? "The server took too long to respond. Please check your connection and try again."
+          : "Something went wrong. Please try again.";
       setErrors((prev) => ({ ...prev, submit: message }));
     } finally {
       setIsSubmitting(false);
