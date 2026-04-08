@@ -109,7 +109,7 @@ export function AuthGate({ children, fallback }: AuthGateProps) {
         </p>
       )}
       <p className="auth-gate-note">
-        Only <strong>@estin.dz</strong> accounts will be accepted.
+        Only{" "}<strong>@estin.dz</strong>{" "}accounts will be accepted.
       </p>
     </div>
   );

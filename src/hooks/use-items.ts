@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   collection,
+  doc,
   query,
   where,
   orderBy,
@@ -55,45 +56,42 @@ export function useItems(options: UseItemsOptions = {}): UseItemsResult {
       const db = getClientDb();
       const itemsRef = collection(db, "items");
       
-      // Build query constraints
-      let q: Query<DocumentData>;
-      
+      // Build query constraints — push category/location filters to Firestore
+      // when possible to reduce bandwidth and read costs.
+      const constraints = [];
+
       if (effectiveUserId) {
         // Profile page: get ALL user's items (no type filter in query)
-        q = query(
-          itemsRef,
-          where("userUID", "==", effectiveUserId),
-          orderBy("createdAt", "desc"),
-          limit(FETCH_LIMIT)
-        );
+        constraints.push(where("userUID", "==", effectiveUserId));
       } else {
         // Browse page: get items by type
-        q = query(
-          itemsRef,
-          where("type", "==", type),
-          orderBy("createdAt", "desc"),
-          limit(FETCH_LIMIT)
-        );
+        constraints.push(where("type", "==", type));
       }
+
+      if (category) {
+        constraints.push(where("category", "==", category));
+      }
+      if (location) {
+        constraints.push(where("location", "==", location));
+      }
+
+      constraints.push(orderBy("createdAt", "desc"));
+      constraints.push(limit(FETCH_LIMIT));
+
+      const q: Query<DocumentData> = query(itemsRef, ...constraints);
 
       // Subscribe to real-time updates
       const unsubscribe = onSnapshot(
         q,
         (snapshot) => {
           if (!isCurrent) return;
-          
+
           let fetchedItems = snapshot.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
-          })) as Item[];
+          })) as unknown as Item[];
 
-          // Client-side filtering for category and location
-          if (category) {
-            fetchedItems = fetchedItems.filter((item) => item.category === category);
-          }
-          if (location) {
-            fetchedItems = fetchedItems.filter((item) => item.location === location);
-          }
+          // Client-side search filter (Firestore has no full-text search)
           if (searchQuery) {
             const normalizedQuery = searchQuery.toLowerCase();
             fetchedItems = fetchedItems.filter((item) => {
@@ -148,21 +146,17 @@ export function useItem(itemId: string | null) {
 
     let isCurrent = true;
     const db = getClientDb();
-    const itemRef = collection(db, "items");
-    
-    // For single item, we could use getDoc, but let's use onSnapshot for consistency
-    const q = query(itemRef, where("__name__", "==", itemId), limit(1));
-    
+    const itemDocRef = doc(db, "items", itemId);
+
     const unsubscribe = onSnapshot(
-      q,
+      itemDocRef,
       (snapshot) => {
         if (!isCurrent) return;
-        if (snapshot.empty) {
+        if (!snapshot.exists()) {
           setItem(null);
           setError("Item not found");
         } else {
-          const doc = snapshot.docs[0];
-          setItem({ id: doc.id, ...doc.data() } as Item);
+          setItem({ id: snapshot.id, ...snapshot.data() } as unknown as Item);
         }
         setLoading(false);
       },

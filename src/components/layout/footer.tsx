@@ -14,7 +14,7 @@ export function Footer() {
           Terms of Service
         </Link>
       </p>
-      <p className="mt-1">© 2026 Anis Belamri · All rights reserved</p>
+      <p className="mt-1">© {new Date().getFullYear()} Anis Belamri · All rights reserved</p>
     </footer>
   );
 }

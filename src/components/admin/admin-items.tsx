@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { collection, query, orderBy, getDocs, limit } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
 import { getClientDb } from "@/lib/firebase/client";
-import { useAuth } from "@/hooks/use-auth";
+import { useAdminAuth } from "@/hooks/use-admin-auth";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { AdminItemModal, type AdminItemSaveData } from "./admin-item-modal";
 import {
@@ -25,9 +24,7 @@ const selectCls =
   "px-3 py-2 rounded-xl bg-[var(--background)] text-[var(--foreground)] border border-[var(--border)] text-sm focus:outline-none focus:border-[var(--foreground)] cursor-pointer";
 
 export function AdminItems() {
-  const { user, loading: authLoading } = useAuth();
-  const [serverVerified, setServerVerified] = useState(false);
-  const [verifying, setVerifying] = useState(true);
+  const { isAdmin, verifying, getToken } = useAdminAuth();
 
   const [activeTab, setActiveTab] = useState<"items" | "users">("items");
   const [items, setItems] = useState<Item[]>([]);
@@ -57,32 +54,7 @@ export function AdminItems() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // ── Admin verification (identical to AdminDashboard) ──────────────
-  useEffect(() => {
-    if (!user || authLoading) { setVerifying(false); return; }
-
-    async function verifyAdmin() {
-      try {
-        const auth = getAuth();
-        const token = await auth.currentUser?.getIdToken(true);
-        if (!token) { setVerifying(false); return; }
-        const res = await fetch("/api/admin/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token }),
-        });
-        const data = await res.json();
-        setServerVerified(data.isAdmin === true);
-      } catch {
-        setServerVerified(false);
-      } finally {
-        setVerifying(false);
-      }
-    }
-    verifyAdmin();
-  }, [user, authLoading]);
-
-  useEffect(() => { if (serverVerified) loadData(); }, [serverVerified]);
+  useEffect(() => { if (isAdmin) loadData(); }, [isAdmin]);
 
   async function loadData() {
     setLoading(true);
@@ -99,10 +71,6 @@ export function AdminItems() {
     } finally {
       setLoading(false);
     }
-  }
-
-  async function getToken(): Promise<string | null> {
-    return getAuth().currentUser?.getIdToken() ?? null;
   }
 
   // ── Filtered data ──────────────────────────────────────────────────
@@ -146,8 +114,8 @@ export function AdminItems() {
       if (editingItem) {
         const res = await fetch(`/api/admin/items/${editingItem.id}`, {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token, ...data }),
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify(data),
         });
         if (!res.ok) throw new Error("Update failed");
         setItems((prev) =>
@@ -156,8 +124,8 @@ export function AdminItems() {
       } else {
         const res = await fetch("/api/admin/items", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token, ...data }),
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify(data),
         });
         if (!res.ok) throw new Error("Create failed");
         await loadData();
@@ -179,8 +147,8 @@ export function AdminItems() {
       if (!token) return;
       const res = await fetch(`/api/admin/items/${item.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, status: newStatus }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status: newStatus }),
       });
       if (!res.ok) throw new Error();
       setItems((prev) =>
@@ -201,8 +169,7 @@ export function AdminItems() {
       if (!token) throw new Error();
       const res = await fetch(`/api/admin/items/${deleteTarget}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error();
       setItems((prev) => prev.filter((i) => i.id !== deleteTarget));
@@ -222,8 +189,8 @@ export function AdminItems() {
       if (!token) return;
       const res = await fetch(`/api/admin/users/${userId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, banned: !currentlyBanned }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ banned: !currentlyBanned }),
       });
       if (!res.ok) throw new Error();
       setUsers((prev) =>
@@ -237,7 +204,7 @@ export function AdminItems() {
   }
 
   // ── Loading / access denied ────────────────────────────────────────
-  if (authLoading || verifying) {
+  if (verifying) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <p className="text-[var(--muted)]">Loading…</p>
@@ -245,7 +212,7 @@ export function AdminItems() {
     );
   }
 
-  if (!serverVerified) {
+  if (!isAdmin) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <h1 className="font-display text-3xl font-bold text-red mb-4">Access Denied</h1>
@@ -512,6 +479,7 @@ export function AdminItems() {
       {/* Add/Edit Item Modal */}
       {modalOpen && (
         <AdminItemModal
+          key={editingItem?.id ?? "new"}
           item={editingItem}
           onSave={handleSave}
           onClose={() => { setModalOpen(false); setEditingItem(null); }}

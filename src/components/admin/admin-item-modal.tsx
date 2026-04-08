@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { X } from "lucide-react";
 import {
   CATEGORIES,
@@ -98,13 +98,10 @@ export function AdminItemModal({
   saving,
   error,
 }: AdminItemModalProps) {
-  const [form, setForm] = useState<ModalFormState>(defaultForm);
+  const [form, setForm] = useState<ModalFormState>(() =>
+    item ? itemToForm(item) : defaultForm()
+  );
   const [validationError, setValidationError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setValidationError(null);
-    setForm(item ? itemToForm(item) : defaultForm());
-  }, [item]);
 
   const availableLocations = useMemo(() => {
     if (form.zone === "school") return ["library", "foyer", "td_halls", "tp_halls"];

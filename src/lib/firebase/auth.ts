@@ -91,9 +91,13 @@ export async function getUserDocument(uid: string): Promise<User | null> {
     return null;
   }
 
+  const data = userSnap.data();
   return {
+    ...data,
     uid,
-    ...userSnap.data(),
+    name: data?.name ?? "Anonymous",
+    email: data?.email ?? "",
+    verified: data?.verified ?? false,
   } as User;
 }
 

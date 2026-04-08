@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -21,6 +21,17 @@ import {
   VALID_LOCATIONS,
   VALID_WHERE_LEFT,
 } from "@/lib/constants/labels";
+
+const SUBMIT_TIMEOUT_MS = 15000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out`)), ms)
+    ),
+  ]);
+}
 
 interface ReportFormProps {
   type: "found" | "lost";
@@ -87,6 +98,16 @@ export function ReportForm({ type }: ReportFormProps) {
 
   const isTeal = type === "found";
   const accentClass = isTeal ? "selected-found" : "selected-lost";
+
+  // Revoke object URL on unmount to prevent memory leak
+  useEffect(() => {
+    return () => {
+      if (formData.photoPreview) {
+        URL.revokeObjectURL(formData.photoPreview);
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- only cleanup on unmount
+  }, []);
 
   // Chip selection handler
   const selectChip = (
@@ -215,7 +236,7 @@ export function ReportForm({ type }: ReportFormProps) {
 
     try {
       // Check rate limit (3 posts per hour, 10 per day)
-      const rateLimit = await checkPostRateLimit(user.uid);
+      const rateLimit = await withTimeout(checkPostRateLimit(user.uid), SUBMIT_TIMEOUT_MS, "Rate limit check");
       if (!rateLimit.allowed) {
         const limitType = rateLimit.dailyRemaining === 0 ? "daily" : "hourly";
         const limit = limitType === "daily" ? 10 : 3;
@@ -262,21 +283,19 @@ export function ReportForm({ type }: ReportFormProps) {
         const mimeToExt: Record<string, string> = {
           "image/jpeg": "jpg",
           "image/png": "png",
-          "image/gif": "gif",
           "image/webp": "webp",
-          "image/heic": "heic",
         };
         const ext = mimeToExt[formData.photoFile.type] || formData.photoFile.name.split(".").pop() || "jpg";
         const path = `${type}-items/${user.uid}/${Date.now()}.${ext}`;
         const photoRef = ref(storage, path);
-        await uploadBytes(photoRef, formData.photoFile);
-        data.photoURL = await getDownloadURL(photoRef);
+        await withTimeout(uploadBytes(photoRef, formData.photoFile), SUBMIT_TIMEOUT_MS, "Photo upload");
+        data.photoURL = await withTimeout(getDownloadURL(photoRef), SUBMIT_TIMEOUT_MS, "Photo URL");
         uploadedPhotoRef = photoRef;
       }
 
       try {
         const cleanData = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== null));
-        await addDoc(collection(db, "items"), cleanData);
+        await withTimeout(addDoc(collection(db, "items"), cleanData), SUBMIT_TIMEOUT_MS, "Saving item");
       } catch (writeErr) {
         // Clean up orphaned photo if the Firestore write fails
         if (uploadedPhotoRef) {
@@ -300,7 +319,10 @@ export function ReportForm({ type }: ReportFormProps) {
       setShowSuccess(true);
     } catch (err) {
       console.error("Report submission error:", err);
-      setErrors((prev) => ({ ...prev, submit: "Something went wrong. Please try again." }));
+      const message = err instanceof Error && err.message.includes("timed out")
+        ? "The server took too long to respond. Please check your connection and try again."
+        : "Something went wrong. Please try again.";
+      setErrors((prev) => ({ ...prev, submit: message }));
     } finally {
       setIsSubmitting(false);
     }
@@ -382,6 +404,7 @@ export function ReportForm({ type }: ReportFormProps) {
             <button
               key={cat.value}
               type="button"
+              aria-pressed={formData.category === cat.value}
               className={`chip-form ${formData.category === cat.value ? accentClass : ""}`}
               onClick={() => selectChip("category", cat.value)}
             >
@@ -390,7 +413,7 @@ export function ReportForm({ type }: ReportFormProps) {
           ))}
         </div>
         {errors.category && (
-          <div className="field-error visible">Please select a category.</div>
+          <div className="field-error visible" role="alert">Please select a category.</div>
         )}
       </div>
 
@@ -404,6 +427,7 @@ export function ReportForm({ type }: ReportFormProps) {
             <button
               key={zone.value}
               type="button"
+              aria-pressed={formData.zone === zone.value}
               className={`chip-form ${formData.zone === zone.value ? accentClass : ""}`}
               onClick={() => selectChip("zone", zone.value)}
             >
@@ -421,6 +445,7 @@ export function ReportForm({ type }: ReportFormProps) {
                 <button
                   key={spot.value}
                   type="button"
+                  aria-pressed={formData.spot === spot.value}
                   className={`chip-form ${formData.spot === spot.value ? accentClass : ""}`}
                   onClick={() => selectSpot(spot.value)}
                 >
@@ -444,7 +469,7 @@ export function ReportForm({ type }: ReportFormProps) {
           </div>
         )}
         {errors.location && (
-          <div className="field-error visible">Please select a location.</div>
+          <div className="field-error visible" role="alert">Please select a location.</div>
         )}
       </div>
 
@@ -457,6 +482,7 @@ export function ReportForm({ type }: ReportFormProps) {
               <button
                 key={opt.value}
                 type="button"
+                aria-pressed={formData.whereLeft === opt.value}
                 className={`chip-form ${formData.whereLeft === opt.value ? accentClass : ""}`}
                 onClick={() => selectChip("whereLeft", opt.value)}
               >
@@ -465,7 +491,7 @@ export function ReportForm({ type }: ReportFormProps) {
             ))}
           </div>
           {errors.whereLeft && (
-            <div className="field-error visible">Please select where the item is now.</div>
+            <div className="field-error visible" role="alert">Please select where the item is now.</div>
           )}
         </div>
       )}
@@ -486,7 +512,7 @@ export function ReportForm({ type }: ReportFormProps) {
           }}
         />
         {errors.date && (
-          <div className="field-error visible">
+          <div className="field-error visible" role="alert">
             Please select the date you {type === "found" ? "found" : "lost"} it.
           </div>
         )}
@@ -573,9 +599,9 @@ export function ReportForm({ type }: ReportFormProps) {
       <div className={`form-notice ${isTeal ? "form-notice--teal" : "form-notice--red"}`}>
         <span className="form-notice-icon">✦</span>
         <p>
-          Your post will be <strong>visible to all ESTIN students</strong> on the browse
-          page. Your <strong>{user?.email}</strong>{" "}
-          <strong>email address will be shared</strong> with{" "}
+          Your post will be{" "}<strong>visible to all ESTIN students</strong>{" "}on the browse
+          page. Your{" "}<strong>{user?.email}</strong>{" "}
+          <strong>email address will be shared</strong>{" "}with{" "}
           {type === "found" ? "the owner" : "the finder"} so they can contact you directly.
         </p>
       </div>
@@ -599,7 +625,7 @@ export function ReportForm({ type }: ReportFormProps) {
       </div>
 
       {errors.submit && (
-        <div className="field-error visible mt-2">{errors.submit}</div>
+        <div className="field-error visible mt-2" role="alert">{errors.submit}</div>
       )}
     </form>
   );

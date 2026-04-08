@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import { X } from "lucide-react";
 import { useNotifications } from "@/hooks/use-notifications";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { formatTime } from "@/lib/utils";
 import Image from "next/image";
 
@@ -14,6 +15,7 @@ interface NotificationModalProps {
 export function NotificationModal({ open, onClose }: NotificationModalProps) {
   const { notifications, unreadCount, loading, markAllRead } = useNotifications();
   const markReadTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const dialogRef = useFocusTrap<HTMLDivElement>(open);
 
   // Memoize markAllRead to avoid re-renders
   const handleMarkAllRead = useCallback(() => {
@@ -51,11 +53,12 @@ export function NotificationModal({ open, onClose }: NotificationModalProps) {
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="relative w-full max-w-md bg-[var(--background)] border border-[var(--border)] rounded-2xl overflow-hidden animate-fade-up max-h-[85vh] flex flex-col">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Notifications" className="relative w-full max-w-md bg-[var(--background)] border border-[var(--border)] rounded-2xl overflow-hidden animate-fade-up max-h-[85vh] flex flex-col">
         {/* Header */}
         <div className="p-6 pb-4 border-b border-[var(--border)]">
           <button
             onClick={onClose}
+            aria-label="Close notifications"
             className="absolute top-4 right-4 p-1 text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer"
           >
             <X size={20} />

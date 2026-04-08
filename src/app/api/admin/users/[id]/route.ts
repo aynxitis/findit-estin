@@ -9,11 +9,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-    const body = await request.json();
-    const { token, banned } = body;
-
-    if (!token || typeof token !== "string") {
+    const token = request.headers.get("Authorization")?.replace("Bearer ", "");
+    if (!token) {
       return NextResponse.json({ error: "No token provided" }, { status: 401 });
     }
 
@@ -22,16 +19,31 @@ export async function PATCH(
       return NextResponse.json({ error: "Not authorized" }, { status: 403 });
     }
 
+    const { id } = await params;
     if (!id) {
       return NextResponse.json({ error: "Missing user ID" }, { status: 400 });
     }
+
+    // Prevent admin from banning themselves
+    if (id === decoded.uid) {
+      return NextResponse.json({ error: "Cannot ban yourself" }, { status: 400 });
+    }
+
+    const body = await request.json();
+    const { banned } = body;
 
     if (typeof banned !== "boolean") {
       return NextResponse.json({ error: "banned must be a boolean" }, { status: 400 });
     }
 
     const db = getAdminDb();
-    await db.collection("users").doc(id).update({ banned });
+    const docRef = db.collection("users").doc(id);
+    const doc = await docRef.get();
+    if (!doc.exists) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    await docRef.update({ banned });
 
     return NextResponse.json({ success: true });
   } catch (err) {

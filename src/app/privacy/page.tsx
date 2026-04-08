@@ -67,7 +67,7 @@ export default function PrivacyPolicy() {
           <section className="legal-card mb-4">
             <h2 className="legal-heading">Why we collect it</h2>
             <p className="text-sm leading-relaxed text-white/70 mb-3">
-              Your email is used <strong className="text-white">only</strong> to verify that you&apos;re
+              Your email is used{" "}<strong className="text-white">only</strong>{" "}to verify that you&apos;re
               a student at ESTIN. Without this check, anyone on the internet
               could post to the platform.
             </p>
@@ -82,7 +82,7 @@ export default function PrivacyPolicy() {
           <section className="legal-card mb-4">
             <h2 className="legal-heading">How we store it</h2>
             <p className="text-sm leading-relaxed text-white/70">
-              Your data is stored in <strong className="text-white">Firebase Firestore</strong>, a
+              Your data is stored in{" "}<strong className="text-white">Firebase Firestore</strong>, a
               Google Cloud database. Access is restricted to verified @estin.dz
               accounts only. No third parties have access to your data.
             </p>
@@ -91,16 +91,16 @@ export default function PrivacyPolicy() {
           <section className="legal-card mb-4">
             <h2 className="legal-heading">Who can see your data</h2>
             <p className="text-sm leading-relaxed text-white/70">
-              Your <strong className="text-white">name</strong> is visible to other signed-in ESTIN
+              Your{" "}<strong className="text-white">name</strong>{" "}is visible to other signed-in ESTIN
               students when you post a lost or found item.
             </p>
             <p className="text-sm leading-relaxed text-white/70">
-              Your <strong className="text-white">email</strong> is only shared when a match is made
+              Your{" "}<strong className="text-white">email</strong>{" "}is only shared when a match is made
               between a lost and found item — to allow the two parties to
               connect.
             </p>
             <p className="text-sm leading-relaxed text-white/70">
-              Your <strong className="text-white">profile picture</strong> is only visible to you in the
+              Your{" "}<strong className="text-white">profile picture</strong>{" "}is only visible to you in the
               nav bar.
             </p>
           </section>
@@ -110,8 +110,8 @@ export default function PrivacyPolicy() {
             <p className="text-sm leading-relaxed text-white/70">
               To have your account and all associated data permanently deleted,
               send an email to{" "}
-              <a href="mailto:am_belamri@estin.dz" className="legal-link">
-                am_belamri@estin.dz
+              <a href="mailto:findit@estin.dz" className="legal-link">
+                findit@estin.dz
               </a>{" "}
               with the subject line{" "}
               <strong className="text-white">&quot;Delete my FINDit account&quot;</strong>. Your data will be
@@ -123,8 +123,8 @@ export default function PrivacyPolicy() {
             <h2 className="legal-heading">Contact</h2>
             <p className="text-sm leading-relaxed text-white/70">
               Questions about this policy? Reach out at{" "}
-              <a href="mailto:am_belamri@estin.dz" className="legal-link">
-                am_belamri@estin.dz
+              <a href="mailto:findit@estin.dz" className="legal-link">
+                findit@estin.dz
               </a>{" "}
               or on{" "}
               <a

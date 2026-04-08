@@ -82,7 +82,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       await signInWithGoogle();
     } catch (err) {
-      const authError = err as AuthError;
+      const authError: AuthError =
+        err && typeof err === "object" && "code" in err
+          ? (err as AuthError)
+          : { code: "auth/unknown", message: err instanceof Error ? err.message : "Sign-in failed" };
       setError(authError);
       throw authError;
     } finally {
@@ -96,7 +99,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await authSignOut();
       // State cleanup is handled by the onAuthChange listener — no manual reset needed
     } catch (err) {
-      const authError = err as AuthError;
+      const authError: AuthError =
+        err && typeof err === "object" && "code" in err
+          ? (err as AuthError)
+          : { code: "auth/unknown", message: err instanceof Error ? err.message : "Sign-out failed" };
       setError(authError);
     }
   }, []);

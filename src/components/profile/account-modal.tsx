@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import { X } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { toTitleCase } from "@/lib/utils";
 import Image from "next/image";
 
@@ -13,6 +15,15 @@ interface AccountModalProps {
 
 export function AccountModal({ open, onClose }: AccountModalProps) {
   const { user, signOut } = useAuth();
+  const dialogRef = useFocusTrap<HTMLDivElement>(open);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (open) document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [open, onClose]);
 
   if (!open || !user) return null;
 
@@ -28,7 +39,7 @@ export function AccountModal({ open, onClose }: AccountModalProps) {
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="relative w-full max-w-sm bg-[var(--background)] border border-[var(--border)] rounded-2xl p-6 animate-fade-up">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Account" className="relative w-full max-w-sm bg-[var(--background)] border border-[var(--border)] rounded-2xl p-6 animate-fade-up">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-1 text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer"
@@ -63,7 +74,7 @@ export function AccountModal({ open, onClose }: AccountModalProps) {
             Browse lost & found items
           </Link>
           <a
-            href="mailto:am_belamri@estin.dz"
+            href="mailto:findit@estin.dz"
             className="block w-full py-3 px-4 rounded-xl border border-[var(--border)] text-center font-display hover:border-yellow hover:bg-yellow/10 hover:text-yellow hover:-translate-y-0.5 transition-all cursor-pointer"
           >
             Report a bug

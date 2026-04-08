@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   collection,
   query,
   where,
   orderBy,
+  limit,
   onSnapshot,
   writeBatch,
   doc,
@@ -41,7 +42,8 @@ export function useNotifications(): UseNotificationsResult {
     const q = query(
       collection(db, "notifications"),
       where("toUID", "==", user.uid),
-      orderBy("createdAt", "desc")
+      orderBy("createdAt", "desc"),
+      limit(100)
     );
 
     const unsubscribe = onSnapshot(
@@ -51,7 +53,7 @@ export function useNotifications(): UseNotificationsResult {
         const notifs = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        })) as Notification[];
+        })) as unknown as Notification[];
         setNotifications(notifs);
         setLoading(false);
       },
@@ -67,7 +69,10 @@ export function useNotifications(): UseNotificationsResult {
     };
   }, [user]);
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => !n.read).length,
+    [notifications]
+  );
 
   const markAllRead = async () => {
     const unread = notifications.filter((n) => !n.read);
@@ -84,8 +89,8 @@ export function useNotifications(): UseNotificationsResult {
         });
         await batch.commit();
       }
-    } catch {
-      // Notifications remain unread — not a blocking error
+    } catch (err) {
+      console.error("Failed to mark notifications as read:", err);
     }
   };
 

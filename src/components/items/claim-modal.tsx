@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { CATEGORY_LABELS, CATEGORY_ICONS, LOCATION_LABELS } from "@/lib/constants/labels";
 import type { Item } from "@/lib/types/item";
@@ -27,6 +27,19 @@ export function ClaimModal({ item, open, onOpenChange, onClaimSuccess }: ClaimMo
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Reset state when modal opens with a new item or reopens
+  useEffect(() => {
+    if (open) {
+      setLoading(false);
+      setError(null);
+      setSuccess(false);
+      if (closeTimerRef.current !== null) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+    }
+  }, [open, item?.id]);
 
   if (!item) return null;
 
@@ -106,7 +119,7 @@ export function ClaimModal({ item, open, onOpenChange, onClaimSuccess }: ClaimMo
       onClaimSuccess?.();
 
       // Close after showing success — store the ID so we can cancel it if the
-      // user closes the modal manually before the 2 s elapses.
+      // user closes the modal manually before the 2 seconds elapse.
       closeTimerRef.current = setTimeout(() => {
         setSuccess(false);
         onOpenChange(false);

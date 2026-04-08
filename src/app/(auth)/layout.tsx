@@ -1,5 +1,3 @@
-"use client";
-
 import { AuthGate } from "@/components/auth";
 import { Nav, Footer, BackgroundBlobs } from "@/components/layout";
 

@@ -1,14 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { collection, query, orderBy, getDocs, limit } from "firebase/firestore";
 import { getClientDb } from "@/lib/firebase/client";
-import { useAuth } from "@/hooks/use-auth";
+import { useAdminAuth } from "@/hooks/use-admin-auth";
 import { CATEGORY_LABELS, CATEGORY_ICONS, LOCATION_LABELS } from "@/lib/constants/labels";
 import type { Item, User as UserType } from "@/lib/types/item";
 import { formatDate } from "@/lib/utils";
 import { RefreshCw } from "lucide-react";
-import { getAuth } from "firebase/auth";
 
 interface Stats {
   totalItems: number;
@@ -19,59 +18,25 @@ interface Stats {
 }
 
 export function AdminDashboard() {
-  const { user, loading: authLoading } = useAuth();
+  const { isAdmin, verifying } = useAdminAuth();
   const [stats, setStats] = useState<Stats | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
   const [activeTab, setActiveTab] = useState<"items" | "users">("items");
   const [loading, setLoading] = useState(true);
-  const [serverVerified, setServerVerified] = useState(false);
-  const [verifying, setVerifying] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Server-side admin verification
-  useEffect(() => {
-    if (!user || authLoading) {
-      setVerifying(false);
-      return;
-    }
-
-    async function verifyAdmin() {
-      try {
-        const auth = getAuth();
-        const token = await auth.currentUser?.getIdToken(true);
-        if (!token) { setVerifying(false); return; }
-
-        const res = await fetch("/api/admin/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token }),
-        });
-        const data = await res.json();
-        setServerVerified(data.isAdmin === true);
-      } catch {
-        setServerVerified(false);
-      } finally {
-        setVerifying(false);
-      }
-    }
-
-    verifyAdmin();
-  }, [user, authLoading]);
-
-  useEffect(() => {
-    if (serverVerified) loadData();
-  }, [serverVerified]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const db = getClientDb();
       const [itemsSnap, usersSnap] = await Promise.all([
         getDocs(query(collection(db, "items"), orderBy("createdAt", "desc"), limit(200))),
         getDocs(query(collection(db, "users"), limit(200))),
       ]);
-      const itemsData = itemsSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as Item[];
-      const usersData = usersSnap.docs.map((d) => ({ uid: d.id, ...d.data() })) as UserType[];
+      const itemsData = itemsSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as unknown as Item[];
+      const usersData = usersSnap.docs.map((d) => ({ uid: d.id, ...d.data() })) as unknown as UserType[];
       setItems(itemsData);
       setUsers(usersData);
       setStats({
@@ -82,14 +47,17 @@ export function AdminDashboard() {
         totalUsers: usersData.length,
       });
     } catch {
-      // load failed
+      setLoadError("Failed to load dashboard data. Please try refreshing.");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
+  useEffect(() => {
+    if (isAdmin) loadData();
+  }, [isAdmin, loadData]);
 
-  if (authLoading || verifying) {
+  if (verifying) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <p className="text-[var(--muted)]">Loading...</p>
@@ -97,7 +65,7 @@ export function AdminDashboard() {
     );
   }
 
-  if (!serverVerified) {
+  if (!isAdmin) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <h1 className="font-display text-3xl font-bold text-red mb-4">Access Denied</h1>
@@ -121,6 +89,13 @@ export function AdminDashboard() {
           Refresh
         </button>
       </div>
+
+      {/* Load error */}
+      {loadError && (
+        <div className="mb-6 p-4 rounded-xl bg-red/10 border border-red/40" role="alert">
+          <p className="text-red font-semibold text-sm">{loadError}</p>
+        </div>
+      )}
 
       {/* Stats */}
       {stats && (

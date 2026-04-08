@@ -60,7 +60,7 @@ export function SignInModal({ open, onOpenChange }: SignInModalProps) {
             Welcome
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Sign in with your <strong className="text-teal">@estin.dz</strong>{" "}
+            Sign in with your{" "}<strong className="text-teal">@estin.dz</strong>{" "}
             Google account to verify you&apos;re an ESTIN student.
           </DialogDescription>
         </DialogHeader>
@@ -79,7 +79,7 @@ export function SignInModal({ open, onOpenChange }: SignInModalProps) {
           )}
 
           <p className="text-xs text-center text-muted-foreground">
-            Only <strong>@estin.dz</strong> accounts will be accepted.
+            Only{" "}<strong>@estin.dz</strong>{" "}accounts will be accepted.
           </p>
         </div>
       </DialogContent>

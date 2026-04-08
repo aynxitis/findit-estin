@@ -55,7 +55,8 @@ export function getGoogleProvider(): GoogleAuthProvider {
 }
 
 // Direct exports for backwards compatibility (browser-only!)
-export const auth = typeof window !== "undefined" ? getClientAuth() : (undefined as unknown as Auth);
-export const db = typeof window !== "undefined" ? getClientDb() : (undefined as unknown as Firestore);
-export const storage = typeof window !== "undefined" ? getClientStorage() : (undefined as unknown as FirebaseStorage);
-export const googleProvider = typeof window !== "undefined" ? getGoogleProvider() : (undefined as unknown as GoogleAuthProvider);
+// These are null on the server — use the getter functions instead.
+export const auth = typeof window !== "undefined" ? getClientAuth() : null;
+export const db = typeof window !== "undefined" ? getClientDb() : null;
+export const storage = typeof window !== "undefined" ? getClientStorage() : null;
+export const googleProvider = typeof window !== "undefined" ? getGoogleProvider() : null;

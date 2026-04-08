@@ -57,7 +57,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { token } = await request.json();
+    // Accept token from Authorization header (preferred) or request body (legacy)
+    const headerToken = request.headers.get("Authorization")?.replace("Bearer ", "");
+    const bodyToken = headerToken ? null : (await request.json()).token;
+    const token = headerToken || bodyToken;
 
     if (!token || typeof token !== "string") {
       return NextResponse.json(

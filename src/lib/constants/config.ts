@@ -4,7 +4,7 @@ export const APP_CONFIG = {
   domain: "estin.dz",
   author: {
     name: "Mohamed Anis BELAMRI",
-    email: "am_belamri@estin.dz",
+    email: "findit@estin.dz",
     github: "https://github.com/aynxitis",
     linkedin: "https://www.linkedin.com/in/anis-belamri/",
     instagram: "https://instagram.com/aynxitis",

@@ -22,6 +22,7 @@ export default function ProfilePage() {
   const [deleteItem, setDeleteItem] = useState<Item | null>(null);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [showAccount, setShowAccount] = useState(false);
 
   // Filter items by type
@@ -41,11 +42,12 @@ export default function ProfilePage() {
   // Resolve item
   const handleResolve = async (item: Item) => {
     setResolvingId(item.id);
+    setActionError(null);
     try {
       const db = getClientDb();
       await updateDoc(doc(db, "items", item.id), { status: "claimed" });
     } catch {
-      // Silently handle error - UI state will reflect failure
+      setActionError("Failed to mark as resolved. Please try again.");
     } finally {
       setResolvingId(null);
     }
@@ -55,12 +57,13 @@ export default function ProfilePage() {
   const handleDelete = async () => {
     if (!deleteItem) return;
     setDeleting(true);
+    setActionError(null);
     try {
       const db = getClientDb();
       await deleteDoc(doc(db, "items", deleteItem.id));
       setDeleteItem(null);
     } catch {
-      // Silently handle error - item remains in list
+      setActionError("Failed to delete item. Please try again.");
     } finally {
       setDeleting(false);
     }
@@ -72,6 +75,13 @@ export default function ProfilePage() {
       {showSuccess && (
         <div className="mb-6 p-4 rounded-xl bg-teal/10 border border-teal text-center">
           <span className="text-teal font-semibold">✓ Your post was submitted successfully!</span>
+        </div>
+      )}
+
+      {/* Action error */}
+      {actionError && (
+        <div className="mb-6 p-4 rounded-xl bg-red/10 border border-red/40 text-center" role="alert">
+          <span className="text-red font-semibold">{actionError}</span>
         </div>
       )}
 

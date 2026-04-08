@@ -85,7 +85,7 @@ export default function TermsOfService() {
           <section className="legal-card mb-4">
             <h2 className="legal-heading">No guarantees</h2>
             <p className="text-sm leading-relaxed text-white/70 mb-3">
-              FINDit is provided <strong className="text-white">as-is</strong>, built and maintained by
+              FINDit is provided{" "}<strong className="text-white">as-is</strong>, built and maintained by
               a student in their free time. We do not guarantee uptime, data
               retention, or successful item reunions. Use it at your own
               discretion.
@@ -106,8 +106,8 @@ export default function TermsOfService() {
             <p className="text-sm leading-relaxed text-white/70">
               You can request deletion of your posts and account at any time by
               contacting{" "}
-              <a href="mailto:am_belamri@estin.dz" className="legal-link">
-                am_belamri@estin.dz
+              <a href="mailto:findit@estin.dz" className="legal-link">
+                findit@estin.dz
               </a>
               .
             </p>
@@ -127,8 +127,8 @@ export default function TermsOfService() {
             <h2 className="legal-heading">Contact</h2>
             <p className="text-sm leading-relaxed text-white/70">
               Questions or concerns? Reach out at{" "}
-              <a href="mailto:am_belamri@estin.dz" className="legal-link">
-                am_belamri@estin.dz
+              <a href="mailto:findit@estin.dz" className="legal-link">
+                findit@estin.dz
               </a>{" "}
               or on{" "}
               <a
